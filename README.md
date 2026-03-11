@@ -1,36 +1,35 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Fast PDR Tools | Sistema de Chamados
 
-## Getting Started
+Sistema interno de chamados construído com Next.js 14, Supabase, Tailwind CSS, shadcn/ui, TypeScript, Zod, React Hook Form e Zustand.
 
-First, run the development server:
+## Setup em 5 passos
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+1. Instale as dependências:
+   `npm install`
+
+2. Crie um projeto no Supabase e copie `.env.example` para `.env.local`:
+   `copy .env.example .env.local`
+
+3. Preencha `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` e `SUPABASE_SERVICE_ROLE_KEY` no `.env.local`.
+
+4. Execute todo o conteúdo de [`schema.sql`](/C:/Users/marke/Desktop/sistemas/chamado/schema.sql) no SQL Editor do Supabase.
+
+5. Cadastre o primeiro usuário em `/register`, promova-o manualmente para admin e então rode:
+   `npm run dev`
+
+## Promover o primeiro admin
+
+Depois do primeiro cadastro, execute:
+
+```sql
+update profiles
+set role = 'admin'
+where id = '<UUID_DO_USUARIO>';
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Scripts
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- `npm run dev`
+- `npm run lint`
+- `npm run typecheck`
+- `npm run build`

@@ -1,27 +1,102 @@
+@import "react-day-picker/dist/style.css";
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: 0 0% 6%;
+  --foreground: 0 0% 100%;
+  --card: 0 0% 10%;
+  --card-foreground: 0 0% 100%;
+  --popover: 0 0% 10%;
+  --popover-foreground: 0 0% 100%;
+  --primary: 25 100% 50%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 0 0% 14%;
+  --secondary-foreground: 0 0% 100%;
+  --muted: 0 0% 13%;
+  --muted-foreground: 0 0% 53%;
+  --accent: 25 100% 50%;
+  --accent-foreground: 0 0% 100%;
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 0 0% 16%;
+  --input: 0 0% 16%;
+  --ring: 25 100% 50%;
+  --radius: 1rem;
+  --brand: #ff6b00;
+  --surface: #1a1a1a;
+  --surface-2: #121212;
+  --text-secondary: #888888;
+  --status-pending: #6b7280;
+  --status-analyzing: #3b82f6;
+  --status-in-progress: #f59e0b;
+  --status-done: #10b981;
+  --priority-low: #6b7280;
+  --priority-medium: #3b82f6;
+  --priority-high: #f59e0b;
+  --priority-urgent: #ef4444;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* {
+  @apply border-border;
+}
+
+html {
+  color-scheme: dark;
 }
 
 body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  background:
+    radial-gradient(circle at top right, rgba(255, 107, 0, 0.12), transparent 24%),
+    radial-gradient(circle at left bottom, rgba(59, 130, 246, 0.08), transparent 30%),
+    #0f0f0f;
+  color: hsl(var(--foreground));
+  font-family: var(--font-sans), sans-serif;
+}
+
+a {
+  @apply transition-colors;
+}
+
+::selection {
+  background: rgba(255, 107, 0, 0.4);
+}
+
+[data-sonner-toaster] {
+  --normal-bg: #141414;
+  --normal-border: #2a2a2a;
+  --normal-text: #ffffff;
 }
 
 @layer utilities {
   .text-balance {
     text-wrap: balance;
+  }
+
+  .surface-panel {
+    @apply border border-border bg-card/80 backdrop-blur;
+  }
+
+  .surface-gradient {
+    background:
+      linear-gradient(180deg, rgba(255, 107, 0, 0.08) 0%, rgba(255, 107, 0, 0) 34%),
+      rgba(26, 26, 26, 0.9);
+  }
+
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: #2a2a2a transparent;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: #2a2a2a;
+    border-radius: 999px;
   }
 }
