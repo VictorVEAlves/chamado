@@ -64,6 +64,45 @@ a {
   background: rgba(255, 107, 0, 0.4);
 }
 
+@keyframes auth-hero-enter {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes auth-form-enter {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.auth-hero-enter {
+  animation: auth-hero-enter 0.4s ease-out both;
+}
+
+.auth-form-enter {
+  animation: auth-form-enter 0.4s ease-out 0.1s both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .auth-hero-enter,
+  .auth-form-enter {
+    animation: none;
+  }
+}
+
 [data-sonner-toaster] {
   --normal-bg: #141414;
   --normal-border: #2a2a2a;
