@@ -74,6 +74,14 @@ export async function loginAction(input: LoginInput): Promise<AuthActionResult> 
     .eq("id", user.id)
     .maybeSingle();
 
+  if (!profile) {
+    await supabase.auth.signOut();
+    return {
+      success: false,
+      error: "Nao foi possivel localizar seu perfil. Procure um administrador.",
+    };
+  }
+
   if (profile && !profile.active) {
     await supabase.auth.signOut();
     return {

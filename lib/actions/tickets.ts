@@ -44,6 +44,21 @@ function validateFiles(files: File[]) {
   return null;
 }
 
+async function removeUploadedFiles(filePaths: string[]) {
+  if (!filePaths.length) return;
+
+  const admin = createAdminSupabaseClient();
+  await admin.storage.from(STORAGE_BUCKET).remove(filePaths);
+}
+
+async function rollbackTicketCreation(ticketId: string, filePaths: string[]) {
+  const admin = createAdminSupabaseClient();
+  await Promise.allSettled([
+    removeUploadedFiles(filePaths),
+    admin.from("tickets").delete().eq("id", ticketId),
+  ]);
+}
+
 async function getAccessibleTicket(ticketId: string) {
   const { supabase } = await requireAuthenticatedUser();
   const { data } = await supabase
@@ -94,6 +109,7 @@ async function getAssignableProfileOrError(
 export async function createTicketAction(formData: FormData) {
   const { user, profile } = await requireAuthenticatedUser();
   const admin = createAdminSupabaseClient();
+  const ticketId = randomUUID();
 
   const rawFiles = normalizeFiles(formData.getAll("attachments"));
   const validationMessage = validateFiles(rawFiles);
@@ -116,9 +132,47 @@ export async function createTicketAction(formData: FormData) {
     };
   }
 
+  const uploadedAttachments =
+    rawFiles.length > 0
+      ? await Promise.all(
+          rawFiles.map(async (file) => {
+            const filePath = `${ticketId}/${randomUUID()}-${slugifyFileName(file.name)}`;
+            const { error: uploadError } = await admin.storage
+              .from(STORAGE_BUCKET)
+              .upload(filePath, Buffer.from(await file.arrayBuffer()), {
+                contentType: file.type,
+                upsert: false,
+              });
+
+            return {
+              fileName: file.name,
+              filePath,
+              error: uploadError,
+            };
+          }),
+        )
+      : [];
+
+  const failedUpload = uploadedAttachments.find((attachment) => attachment.error);
+  if (failedUpload) {
+    await removeUploadedFiles(
+      uploadedAttachments
+        .filter((attachment) => !attachment.error)
+        .map((attachment) => attachment.filePath),
+    );
+
+    return {
+      success: false,
+      error: "Nao foi possivel concluir o upload dos anexos.",
+    };
+  }
+
+  const uploadedFilePaths = uploadedAttachments.map((attachment) => attachment.filePath);
+
   const { data: ticket, error } = await admin
     .from("tickets")
     .insert({
+      id: ticketId,
       title: parsed.data.title,
       description: parsed.data.description,
       priority: parsed.data.priority,
@@ -126,44 +180,34 @@ export async function createTicketAction(formData: FormData) {
       created_by: user.id,
       status: "pending",
     })
-    .select("*")
+    .select("id")
     .single();
 
   if (error || !ticket) {
+    await removeUploadedFiles(uploadedFilePaths);
     return {
       success: false,
       error: "Nao foi possivel criar o chamado.",
     };
   }
 
-  if (rawFiles.length) {
-    const attachmentRows = [];
+  if (uploadedAttachments.length) {
+    const { error: attachmentInsertError } = await admin
+      .from("ticket_attachments")
+      .insert(
+        uploadedAttachments.map((attachment) => ({
+          ticket_id: ticket.id,
+          file_url: attachment.filePath,
+          file_name: attachment.fileName,
+        })),
+      );
 
-    for (const file of rawFiles) {
-      const filePath = `${ticket.id}/${randomUUID()}-${slugifyFileName(file.name)}`;
-      const { error: uploadError } = await admin.storage
-        .from(STORAGE_BUCKET)
-        .upload(filePath, Buffer.from(await file.arrayBuffer()), {
-          contentType: file.type,
-          upsert: false,
-        });
-
-      if (uploadError) {
-        return {
-          success: false,
-          error: "O chamado foi criado, mas houve falha no upload dos anexos.",
-        };
-      }
-
-      attachmentRows.push({
-        ticket_id: ticket.id,
-        file_url: filePath,
-        file_name: file.name,
-      });
-    }
-
-    if (attachmentRows.length) {
-      await admin.from("ticket_attachments").insert(attachmentRows);
+    if (attachmentInsertError) {
+      await rollbackTicketCreation(ticket.id, uploadedFilePaths);
+      return {
+        success: false,
+        error: "Nao foi possivel registrar os anexos do chamado.",
+      };
     }
   }
 
@@ -178,8 +222,7 @@ export async function createTicketAction(formData: FormData) {
 }
 
 export async function createCommentAction(input: { ticketId: string; content: string }) {
-  const { profile } = await requireAuthenticatedUser();
-  const admin = createAdminSupabaseClient();
+  const { profile, supabase } = await requireAuthenticatedUser();
   const parsed = commentSchema.safeParse(input);
 
   if (!parsed.success) {
@@ -194,7 +237,7 @@ export async function createCommentAction(input: { ticketId: string; content: st
     notFound();
   }
 
-  const { error } = await admin.from("ticket_comments").insert({
+  const { error } = await supabase.from("ticket_comments").insert({
     ticket_id: ticket.id,
     user_id: profile.id,
     content: parsed.data.content,

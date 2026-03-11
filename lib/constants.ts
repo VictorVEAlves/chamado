@@ -2,6 +2,7 @@ import type { Department, TicketPriority, TicketStatus } from "@/types";
 
 export const APP_NAME = "Fast PDR Tools";
 export const TICKETS_PAGE_SIZE = 10;
+export const ADMIN_PAGE_SIZE = 25;
 export const MAX_ATTACHMENT_SIZE = 5 * 1024 * 1024;
 export const ACCEPTED_ATTACHMENT_TYPES = [
   "image/jpeg",

@@ -30,6 +30,29 @@ where id = '<UUID_DO_USUARIO>';
 ## Scripts
 
 - `npm run dev`
+- `npm run dev:turbo`
 - `npm run lint`
 - `npm run typecheck`
 - `npm run build`
+- `npm run perf:measure`
+- `npm run perf:warm`
+
+## Diagnostico de lentidao local
+
+No ambiente `npm run dev`, a primeira navegacao pode ficar mais lenta por compilacao sob demanda do Next.js. Isso nao deve ser usado como referencia de performance final.
+
+Use:
+
+- `npm run dev:turbo` para comparar a experiencia local com Turbopack.
+- `npm run perf:warm` para aquecer as rotas mais comuns antes de testar manualmente.
+- `npm run perf:measure` para medir a primeira e a segunda resposta das rotas padrao.
+- `node scripts/measure-routes.mjs http://localhost:3000 /login /register` para medir rotas especificas.
+
+Para medir rotas protegidas autenticadas, passe o cookie da sessao:
+
+```powershell
+$env:PERF_COOKIE = "sb-access-token=...; sb-refresh-token=..."
+npm run perf:measure
+```
+
+Para validar performance real, use `npm run build` seguido de `npm run start` e compare os tempos com o ambiente de desenvolvimento.

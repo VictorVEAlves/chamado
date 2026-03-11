@@ -38,7 +38,8 @@ export function TicketsFilters({ filters }: TicketsFiltersProps) {
         else params.delete(key);
       });
       params.delete("page");
-      router.push(`${pathname}?${params.toString()}`);
+      const nextQuery = params.toString();
+      router.replace(nextQuery ? `${pathname}?${nextQuery}` : pathname);
     },
     [pathname, router, searchParams],
   );
@@ -62,7 +63,7 @@ export function TicketsFilters({ filters }: TicketsFiltersProps) {
 
   const clearAll = () => {
     setSearch("");
-    router.push(pathname);
+    router.replace(pathname);
   };
 
   return (

@@ -86,6 +86,28 @@ export interface TicketFilters {
   page?: number;
 }
 
+export type AdminTab = "tickets" | "users";
+export type UserActiveFilter = "all" | "active" | "inactive";
+
+export interface PaginationState {
+  page: number;
+  pageSize: number;
+  total: number;
+  totalPages: number;
+  hasPrevious: boolean;
+  hasNext: boolean;
+}
+
+export interface AdminPageFilters {
+  tab: AdminTab;
+  ticketsPage: number;
+  usersPage: number;
+  ticketStatus?: TicketStatus;
+  ticketDepartment?: Department;
+  userSearch?: string;
+  userActive: UserActiveFilter;
+}
+
 export interface DashboardMetrics {
   openTotal: number;
   inProgressTotal: number;

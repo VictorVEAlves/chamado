@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { requireAuthenticatedUser } from "@/lib/data/auth";
-import { createAdminSupabaseClient } from "@/lib/supabase/admin";
+import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { firstOrNull } from "@/lib/utils";
 import type { Notification } from "@/types";
 
@@ -36,9 +36,9 @@ export async function getRecentNotificationsAction(limit = 5) {
 
 export async function markAllNotificationsReadAction() {
   const { user } = await requireAuthenticatedUser();
-  const admin = createAdminSupabaseClient();
+  const supabase = createServerSupabaseClient();
 
-  const { error } = await admin
+  const { error } = await supabase
     .from("notifications")
     .update({ read: true })
     .eq("user_id", user.id)

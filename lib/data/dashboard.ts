@@ -1,9 +1,9 @@
 import "server-only";
 
-import { isSameMonth, subDays } from "date-fns";
+import { startOfMonth, subDays } from "date-fns";
 import type { DashboardMetrics, Ticket } from "@/types";
 import { requireAuthenticatedUser } from "@/lib/data/auth";
-import { firstOrNull, getStatusLabel } from "@/lib/utils";
+import { getStatusLabel } from "@/lib/utils";
 
 interface ChartBar {
   status: string;
@@ -12,43 +12,57 @@ interface ChartBar {
 
 export async function getDashboardData() {
   const { supabase } = await requireAuthenticatedUser();
+  const now = new Date();
+  const last30Days = subDays(now, 30).toISOString();
+  const monthStart = startOfMonth(now).toISOString();
 
-  const [ticketResult, recentResult] = await Promise.all([
+  const [
+    openResult,
+    inProgressResult,
+    urgentResult,
+    doneThisMonthResult,
+    chartResult,
+    recentResult,
+  ] = await Promise.all([
     supabase
       .from("tickets")
-      .select("id, title, description, status, priority, department, created_by, assigned_to, created_at, updated_at"),
+      .select("id", { count: "exact", head: true })
+      .neq("status", "done"),
     supabase
       .from("tickets")
-      .select(
-        "id, title, description, status, priority, department, created_by, assigned_to, created_at, updated_at, creator:profiles!tickets_created_by_fkey(id, name, avatar_url, department)",
-      )
+      .select("id", { count: "exact", head: true })
+      .eq("status", "in_progress"),
+    supabase
+      .from("tickets")
+      .select("id", { count: "exact", head: true })
+      .eq("priority", "urgent")
+      .neq("status", "done"),
+    supabase
+      .from("tickets")
+      .select("id", { count: "exact", head: true })
+      .eq("status", "done")
+      .gte("updated_at", monthStart),
+    supabase
+      .from("tickets")
+      .select("status, created_at")
+      .gte("created_at", last30Days),
+    supabase
+      .from("tickets")
+      .select("id, title, status, priority, created_at")
       .order("created_at", { ascending: false })
       .limit(5),
   ]);
 
-  const tickets = (ticketResult.data ?? []) as Ticket[];
-  const recentTickets = ((recentResult.data ?? []).map((ticket) => ({
-    ...ticket,
-    creator: firstOrNull(ticket.creator),
-  })) as unknown as Ticket[]) ?? [];
-  const now = new Date();
-  const last30Days = subDays(now, 30);
+  const recentTickets = ((recentResult.data ?? []) as Ticket[]) ?? [];
+  const chartRows =
+    ((chartResult.data ?? []) as Array<Pick<Ticket, "status" | "created_at">>) ?? [];
 
   const metrics: DashboardMetrics = {
-    openTotal: tickets.filter((ticket) => ticket.status !== "done").length,
-    inProgressTotal: tickets.filter((ticket) => ticket.status === "in_progress").length,
-    urgentTotal: tickets.filter(
-      (ticket) => ticket.priority === "urgent" && ticket.status !== "done",
-    ).length,
-    doneThisMonth: tickets.filter(
-      (ticket) =>
-        ticket.status === "done" && isSameMonth(new Date(ticket.updated_at), now),
-    ).length,
+    openTotal: openResult.count ?? 0,
+    inProgressTotal: inProgressResult.count ?? 0,
+    urgentTotal: urgentResult.count ?? 0,
+    doneThisMonth: doneThisMonthResult.count ?? 0,
   };
-
-  const chartSource = tickets.filter(
-    (ticket) => new Date(ticket.created_at).getTime() >= last30Days.getTime(),
-  );
 
   const statuses: Ticket["status"][] = [
     "pending",
@@ -59,7 +73,7 @@ export async function getDashboardData() {
 
   const chartData: ChartBar[] = statuses.map((status) => ({
     status: getStatusLabel(status),
-    total: chartSource.filter((ticket) => ticket.status === status).length,
+    total: chartRows.filter((ticket) => ticket.status === status).length,
   }));
 
   return { metrics, chartData, recentTickets };

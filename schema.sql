@@ -1,4 +1,5 @@
 create extension if not exists pgcrypto;
+create extension if not exists pg_trgm;
 
 do $$
 begin
@@ -73,6 +74,39 @@ create table if not exists notifications (
   read boolean default false,
   created_at timestamptz default now()
 );
+
+create index if not exists profiles_active_department_name_idx
+  on public.profiles (active, department, name);
+
+create index if not exists tickets_updated_at_idx
+  on public.tickets (updated_at desc);
+
+create index if not exists tickets_created_by_updated_at_idx
+  on public.tickets (created_by, updated_at desc);
+
+create index if not exists tickets_department_status_updated_at_idx
+  on public.tickets (department, status, updated_at desc);
+
+create index if not exists tickets_created_at_idx
+  on public.tickets (created_at desc);
+
+create index if not exists tickets_title_trgm_idx
+  on public.tickets using gin (title gin_trgm_ops);
+
+create index if not exists tickets_description_trgm_idx
+  on public.tickets using gin (description gin_trgm_ops);
+
+create index if not exists ticket_comments_ticket_created_at_idx
+  on public.ticket_comments (ticket_id, created_at);
+
+create index if not exists ticket_history_ticket_created_at_idx
+  on public.ticket_history (ticket_id, created_at desc);
+
+create index if not exists ticket_attachments_ticket_created_at_idx
+  on public.ticket_attachments (ticket_id, created_at);
+
+create index if not exists notifications_user_read_created_at_idx
+  on public.notifications (user_id, read, created_at desc);
 
 create or replace function public.set_ticket_updated_at()
 returns trigger

@@ -9,6 +9,7 @@ interface PaginationControlsProps {
   totalPages: number;
   hasPrevious: boolean;
   hasNext: boolean;
+  pageParam?: string;
 }
 
 export function PaginationControls({
@@ -16,6 +17,7 @@ export function PaginationControls({
   totalPages,
   hasPrevious,
   hasNext,
+  pageParam = "page",
 }: PaginationControlsProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -23,8 +25,9 @@ export function PaginationControls({
 
   const goToPage = (targetPage: number) => {
     const params = new URLSearchParams(searchParams.toString());
-    params.set("page", String(targetPage));
-    router.push(`${pathname}?${params.toString()}`);
+    params.set(pageParam, String(targetPage));
+    const nextQuery = params.toString();
+    router.replace(nextQuery ? `${pathname}?${nextQuery}` : pathname);
   };
 
   return (
