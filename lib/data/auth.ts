@@ -3,6 +3,7 @@ import "server-only";
 import { cache } from "react";
 import { redirect } from "next/navigation";
 import type { User } from "@supabase/supabase-js";
+import { hasAdminPanelAccess } from "@/lib/access";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import type { Profile } from "@/types";
 
@@ -59,6 +60,16 @@ export async function requireAdminUser() {
   const context = await requireAuthenticatedUser();
 
   if (context.profile.role !== "admin") {
+    redirect("/403");
+  }
+
+  return context;
+}
+
+export async function requireAdminPanelAccess() {
+  const context = await requireAuthenticatedUser();
+
+  if (!hasAdminPanelAccess(context.profile)) {
     redirect("/403");
   }
 

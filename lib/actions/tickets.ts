@@ -3,13 +3,14 @@
 import { randomUUID } from "crypto";
 import { revalidatePath } from "next/cache";
 import { notFound } from "next/navigation";
+import { hasGlobalTicketAccess } from "@/lib/access";
 import {
   ACCEPTED_ATTACHMENT_TYPES,
   MAX_ATTACHMENT_SIZE,
   STORAGE_BUCKET,
 } from "@/lib/constants";
 import { createClickUpTask } from "@/lib/clickup";
-import { requireAdminUser, requireAuthenticatedUser } from "@/lib/data/auth";
+import { requireAdminPanelAccess, requireAuthenticatedUser } from "@/lib/data/auth";
 import {
   notifyAssigned,
   notifyNewComment,
@@ -346,7 +347,8 @@ export async function changeTicketStatusAction(input: {
     notFound();
   }
 
-  const canChange = profile.role === "admin" || ticket.assigned_to === profile.id;
+  const canChange =
+    hasGlobalTicketAccess(profile) || ticket.assigned_to === profile.id;
 
   if (!canChange) {
     return {
@@ -416,7 +418,7 @@ export async function assignTicketAction(input: {
   }
 
   const canAssign =
-    profile.role === "admin" || profile.department === ticket.department;
+    hasGlobalTicketAccess(profile) || profile.department === ticket.department;
 
   if (!canAssign) {
     return {
@@ -478,7 +480,7 @@ export async function assignTicketAction(input: {
 }
 
 export async function assignTicketToSelfAction(input: { ticketId: string }) {
-  const { profile } = await requireAdminUser();
+  const { profile } = await requireAdminPanelAccess();
   return assignTicketAction({
     ticketId: input.ticketId,
     assignedTo: profile.id,
@@ -489,7 +491,7 @@ export async function reassignDepartmentAction(input: {
   ticketId: string;
   department: string;
 }) {
-  await requireAdminUser();
+  await requireAdminPanelAccess();
   const admin = createAdminSupabaseClient();
   const parsed = reassignDepartmentSchema.safeParse(input);
 
@@ -528,7 +530,7 @@ export async function toggleUserActiveAction(input: {
   userId: string;
   active: boolean;
 }) {
-  await requireAdminUser();
+  await requireAdminPanelAccess();
   const admin = createAdminSupabaseClient();
   const parsed = toggleUserActiveSchema.safeParse(input);
 

@@ -1,5 +1,6 @@
 import "server-only";
 
+import { hasGlobalTicketAccess } from "@/lib/access";
 import {
   ADMIN_PAGE_SIZE,
   DEPARTMENT_OPTIONS,
@@ -7,7 +8,7 @@ import {
   STATUS_OPTIONS,
   TICKETS_PAGE_SIZE,
 } from "@/lib/constants";
-import { requireAdminUser, requireAuthenticatedUser } from "@/lib/data/auth";
+import { requireAdminPanelAccess, requireAuthenticatedUser } from "@/lib/data/auth";
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 import { buildPagination, firstOrNull } from "@/lib/utils";
 import type {
@@ -238,7 +239,7 @@ export async function getTicketDetails(ticketId: string) {
 
   let assignableUsers: Profile[] = [];
   const canAssignResponsibility =
-    profile.role === "admin" || profile.department === baseTicket.department;
+    hasGlobalTicketAccess(profile) || profile.department === baseTicket.department;
 
   if (canAssignResponsibility) {
     const { data } = await admin
@@ -276,7 +277,7 @@ export async function getTicketDetails(ticketId: string) {
 }
 
 export async function getAdminPageData(searchParams?: SearchParams) {
-  await requireAdminUser();
+  await requireAdminPanelAccess();
   const admin = createAdminSupabaseClient();
   const filters = normalizeAdminFilters(searchParams);
 

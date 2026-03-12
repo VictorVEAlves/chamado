@@ -12,7 +12,9 @@ export type Department =
   | "logistica"
   | "ti"
   | "rh"
-  | "diretoria";
+  | "diretoria"
+  | "barueri"
+  | "itajai";
 
 export interface Profile {
   id: string;

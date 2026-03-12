@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { hasAdminPanelAccess } from "@/lib/access";
 import { updateSession } from "@/lib/supabase/middleware";
 
 const protectedPrefixes = ["/dashboard", "/tickets", "/admin"];
@@ -33,7 +34,7 @@ export async function middleware(request: NextRequest) {
   if (isAdminRoute) {
     const { data: profile } = await supabase
       .from("profiles")
-      .select("active, role")
+      .select("active, role, department")
       .eq("id", user.id)
       .maybeSingle();
 
@@ -45,7 +46,7 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(url);
     }
 
-    if (isAdminRoute && profile?.role !== "admin") {
+    if (profile && !hasAdminPanelAccess(profile)) {
       const url = request.nextUrl.clone();
       url.pathname = "/403";
       return NextResponse.rewrite(url, { status: 403 });

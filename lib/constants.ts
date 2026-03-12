@@ -22,6 +22,8 @@ export const DEPARTMENT_OPTIONS: Department[] = [
   "ti",
   "rh",
   "diretoria",
+  "barueri",
+  "itajai",
 ];
 
 export const STATUS_OPTIONS: TicketStatus[] = [
@@ -62,6 +64,8 @@ export const DEPARTMENT_LABELS: Record<Department, string> = {
   ti: "TI",
   rh: "RH",
   diretoria: "Diretoria",
+  barueri: "Barueri",
+  itajai: "Itajaí",
 };
 
 export const STATUS_COLORS: Record<TicketStatus, string> = {

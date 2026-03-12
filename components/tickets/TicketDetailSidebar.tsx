@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { Loader2, UserCheck } from "lucide-react";
 import { useTransition } from "react";
 import { toast } from "sonner";
+import { hasGlobalTicketAccess } from "@/lib/access";
 import {
   assignTicketAction,
   changeTicketStatusAction,
@@ -46,9 +47,9 @@ export function TicketDetailSidebar({
   const [isStatusPending, startStatusTransition] = useTransition();
   const [isAssignPending, startAssignTransition] = useTransition();
   const canChangeStatus =
-    profile.role === "admin" || ticket.assigned_to === profile.id;
+    hasGlobalTicketAccess(profile) || ticket.assigned_to === profile.id;
   const canAssignResponsibility =
-    profile.role === "admin" || profile.department === ticket.department;
+    hasGlobalTicketAccess(profile) || profile.department === ticket.department;
 
   const handleStatusChange = (status: string) => {
     startStatusTransition(async () => {
@@ -197,7 +198,7 @@ export function TicketDetailSidebar({
               </Select>
             ) : (
               <p className="text-sm text-muted-foreground">
-                Apenas admins ou o responsavel atribuido podem alterar o status.
+                Apenas admins, diretoria ou o responsavel atribuido podem alterar o status.
               </p>
             )}
             {isStatusPending ? (

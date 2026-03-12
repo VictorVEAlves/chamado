@@ -14,6 +14,7 @@ import {
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { logoutAction } from "@/lib/actions/auth";
+import { hasAdminPanelAccess } from "@/lib/access";
 import { getDepartmentLabel, getInitials } from "@/lib/utils";
 import type { Profile } from "@/types";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -69,7 +70,7 @@ export function Sidebar({ profile }: SidebarProps) {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
   const links =
-    profile.role === "admin"
+    hasAdminPanelAccess(profile)
       ? [
           ...baseLinks,
           {

@@ -1,10 +1,12 @@
 "use client";
 
 import {
+  Building2,
   BriefcaseBusiness,
   ChartNoAxesColumn,
   Globe2,
   HandCoins,
+  MapPin,
   Megaphone,
   MonitorCog,
   ShoppingCart,
@@ -34,6 +36,8 @@ const departmentIcons = {
   ti: MonitorCog,
   rh: Users,
   diretoria: ChartNoAxesColumn,
+  barueri: Building2,
+  itajai: MapPin,
 } as const;
 
 interface NewTicketViewProps {

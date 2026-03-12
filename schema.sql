@@ -13,10 +13,13 @@ begin
     create type ticket_priority as enum ('low', 'medium', 'high', 'urgent');
   end if;
   if not exists (select 1 from pg_type where typname = 'department') then
-    create type department as enum ('comercial', 'marketing', 'comex', 'compras', 'financeiro', 'logistica', 'ti', 'rh', 'diretoria');
+    create type department as enum ('comercial', 'marketing', 'comex', 'compras', 'financeiro', 'logistica', 'ti', 'rh', 'diretoria', 'barueri', 'itajai');
   end if;
 end
 $$;
+
+alter type department add value if not exists 'barueri';
+alter type department add value if not exists 'itajai';
 
 create table if not exists profiles (
   id uuid references auth.users(id) primary key,
@@ -140,6 +143,32 @@ as $$
   );
 $$;
 
+create or replace function public.is_diretoria()
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select exists (
+    select 1
+    from public.profiles
+    where id = auth.uid()
+      and department = 'diretoria'
+      and active = true
+  );
+$$;
+
+create or replace function public.has_global_ticket_access()
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select public.is_admin() or public.is_diretoria();
+$$;
+
 create or replace function public.can_access_ticket(target_ticket_id uuid)
 returns boolean
 language sql
@@ -154,7 +183,7 @@ as $$
       on p.id = auth.uid()
     where t.id = target_ticket_id
       and (
-        public.is_admin()
+        public.has_global_ticket_access()
         or t.created_by = auth.uid()
         or (p.active = true and p.department = t.department)
       )
@@ -208,6 +237,8 @@ grant usage on schema public to anon, authenticated, service_role;
 grant select, insert, update on all tables in schema public to authenticated;
 grant select, insert, update, delete on all tables in schema public to service_role;
 grant execute on function public.is_admin() to authenticated;
+grant execute on function public.is_diretoria() to authenticated;
+grant execute on function public.has_global_ticket_access() to authenticated;
 grant execute on function public.can_access_ticket(uuid) to authenticated;
 grant execute on function public.get_department_open_counts() to authenticated;
 
@@ -242,7 +273,7 @@ create policy "tickets_select_department_or_creator_or_admin"
 on public.tickets
 for select
 using (
-  public.is_admin()
+  public.has_global_ticket_access()
   or created_by = auth.uid()
   or exists (
     select 1
