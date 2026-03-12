@@ -43,6 +43,40 @@ function mapPriorityToClickUp(
   }
 }
 
+function normalizeAppUrl(value: string) {
+  return value.replace(/\/+$/, "");
+}
+
+function getTicketBaseUrl() {
+  const configuredAppUrl = process.env.NEXT_PUBLIC_APP_URL?.trim();
+  const normalizedConfiguredAppUrl = configuredAppUrl
+    ? normalizeAppUrl(configuredAppUrl)
+    : null;
+  const hasLocalhostAppUrl =
+    normalizedConfiguredAppUrl === "http://localhost:3000" ||
+    normalizedConfiguredAppUrl === "http://127.0.0.1:3000";
+
+  if (normalizedConfiguredAppUrl && !hasLocalhostAppUrl) {
+    return normalizedConfiguredAppUrl;
+  }
+
+  const vercelProductionUrl = process.env.VERCEL_PROJECT_PRODUCTION_URL?.trim();
+  if (vercelProductionUrl) {
+    return normalizeAppUrl(`https://${vercelProductionUrl.replace(/^https?:\/\//, "")}`);
+  }
+
+  const vercelUrl = process.env.VERCEL_URL?.trim();
+  if (vercelUrl) {
+    return normalizeAppUrl(`https://${vercelUrl.replace(/^https?:\/\//, "")}`);
+  }
+
+  if (normalizedConfiguredAppUrl) {
+    return normalizedConfiguredAppUrl;
+  }
+
+  return "http://localhost:3000";
+}
+
 function normalizeFiles(files: FormDataEntryValue[]) {
   return files.filter((file): file is File => file instanceof File && file.size > 0);
 }
@@ -229,7 +263,7 @@ export async function createTicketAction(formData: FormData) {
   }
 
   if (parsed.data.department === "marketing") {
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+    const baseUrl = getTicketBaseUrl();
 
     await createClickUpTask({
       name: parsed.data.title,
