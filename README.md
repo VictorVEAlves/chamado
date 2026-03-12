@@ -11,6 +11,7 @@ Sistema interno de chamados construído com Next.js 14, Supabase, Tailwind CSS, 
    `copy .env.example .env.local`
 
 3. Preencha `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` e `SUPABASE_SERVICE_ROLE_KEY` no `.env.local`.
+   Para integrar tickets de marketing ao ClickUp, configure tambem `NEXT_PUBLIC_APP_URL`, `CLICKUP_API_TOKEN` e `CLICKUP_MARKETING_LIST_ID`.
 
 4. Execute todo o conteúdo de [`schema.sql`](/C:/Users/marke/Desktop/sistemas/chamado/schema.sql) no SQL Editor do Supabase.
 
@@ -56,3 +57,11 @@ npm run perf:measure
 ```
 
 Para validar performance real, use `npm run build` seguido de `npm run start` e compare os tempos com o ambiente de desenvolvimento.
+
+## Integracao ClickUp
+
+Tickets criados com `department = marketing` tentam criar automaticamente uma task no ClickUp da lista configurada.
+
+- A integracao e best-effort: falha no ClickUp nao bloqueia a criacao do chamado.
+- Ela vale apenas para novos tickets de marketing.
+- Se `CLICKUP_API_TOKEN` ou `CLICKUP_MARKETING_LIST_ID` nao estiverem configurados, o sistema apenas registra um warning no servidor e segue normalmente.

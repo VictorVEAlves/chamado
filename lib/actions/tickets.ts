@@ -8,6 +8,7 @@ import {
   MAX_ATTACHMENT_SIZE,
   STORAGE_BUCKET,
 } from "@/lib/constants";
+import { createClickUpTask } from "@/lib/clickup";
 import { requireAdminUser, requireAuthenticatedUser } from "@/lib/data/auth";
 import {
   notifyAssigned,
@@ -25,6 +26,22 @@ import {
 import { toggleUserActiveSchema } from "@/lib/validations/user.schema";
 import { getStatusLabel, slugifyFileName } from "@/lib/utils";
 import type { Profile, Ticket } from "@/types";
+
+function mapPriorityToClickUp(
+  priority: Ticket["priority"],
+): 1 | 2 | 3 | 4 {
+  switch (priority) {
+    case "urgent":
+      return 1;
+    case "high":
+      return 2;
+    case "medium":
+      return 3;
+    case "low":
+    default:
+      return 4;
+  }
+}
 
 function normalizeFiles(files: FormDataEntryValue[]) {
   return files.filter((file): file is File => file instanceof File && file.size > 0);
@@ -209,6 +226,19 @@ export async function createTicketAction(formData: FormData) {
         error: "Nao foi possivel registrar os anexos do chamado.",
       };
     }
+  }
+
+  if (parsed.data.department === "marketing") {
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+
+    await createClickUpTask({
+      name: parsed.data.title,
+      description: parsed.data.description,
+      priority: mapPriorityToClickUp(parsed.data.priority),
+      ticketId: ticket.id,
+      ticketUrl: `${baseUrl}/tickets/${ticket.id}`,
+      createdBy: profile.name,
+    });
   }
 
   revalidatePath("/dashboard");
